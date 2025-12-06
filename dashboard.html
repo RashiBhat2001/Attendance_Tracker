@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Student Attendance{% endblock %}
+
+{% block content %}
+<div class="min-h-screen">
+    <header class="bg-white shadow-sm">
+        <div class="max-w-5xl mx-auto px-4 py-4 md:px-6 md:py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center mr-3">
+                        <span class="material-icons text-white">person</span>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-medium text-gray-800">{{ student.name }}</h1>
+                        <p class="text-sm text-gray-500">ID: {{ student.student_id }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2 md:space-x-4">
+                    <a href="{{ url_for('history') }}" class="flex items-center text-gray-600 hover:text-blue-600 transition p-2">
+                        <span class="material-icons">history</span>
+                        <span class="hidden md:inline ml-1">History</span>
+                    </a>
+                    <a href="{{ url_for('profile') }}" class="flex items-center text-gray-600 hover:text-blue-600 transition p-2">
+                        <span class="material-icons">settings</span>
+                        <span class="hidden md:inline ml-1">Profile</span>
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="flex items-center text-gray-600 hover:text-gray-800 transition p-2">
+                        <span class="material-icons">logout</span>
+                        <span class="hidden md:inline ml-1">Logout</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <main class="max-w-5xl mx-auto px-4 py-6 md:px-6 md:py-8">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-6 p-4 rounded-md {% if category == 'error' %}bg-red-50 text-red-700 border border-red-200{% else %}bg-green-50 text-green-700 border border-green-200{% endif %}">
+                        <div class="flex items-center">
+                            <span class="material-icons mr-2 text-lg">
+                                {% if category == 'error' %}error{% else %}check_circle{% endif %}
+                            </span>
+                            {{ message }}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% if attendance.alerts %}
+            <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+                <div class="flex items-start">
+                    <span class="material-icons text-orange-500 mr-3 mt-0.5">notifications_active</span>
+                    <div class="flex-1">
+                        <h3 class="font-medium text-orange-800 mb-2">Attendance Alerts</h3>
+                        <div class="space-y-2">
+                            {% for alert in attendance.alerts %}
+                                <div class="flex items-center justify-between p-2 rounded {% if alert.severity == 'critical' %}bg-red-100{% else %}bg-yellow-100{% endif %}">
+                                    <div class="flex items-center">
+                                        <span class="material-icons text-sm mr-2 {% if alert.severity == 'critical' %}text-red-600{% else %}text-yellow-600{% endif %}">
+                                            {% if alert.severity == 'critical' %}error{% else %}warning{% endif %}
+                                        </span>
+                                        <span class="text-sm font-medium {% if alert.severity == 'critical' %}text-red-800{% else %}text-yellow-800{% endif %}">
+                                            {{ alert.subject }}: {{ alert.percentage }}%
+                                        </span>
+                                    </div>
+                                    <span class="text-xs {% if alert.severity == 'critical' %}text-red-600{% else %}text-yellow-600{% endif %}">
+                                        Need {{ alert.classes_needed }} more classes to reach 75%
+                                    </span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-medium text-gray-800 mb-4">Overall Attendance</h2>
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-4xl font-bold {% if attendance.overall >= 75 %}text-green-600{% elif attendance.overall >= 60 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                        {{ attendance.overall }}%
+                    </p>
+                    <p class="text-sm text-gray-500 mt-1">
+                        {% if attendance.overall >= 75 %}
+                            <span class="flex items-center text-green-600">
+                                <span class="material-icons text-sm mr-1">check_circle</span>
+                                Good standing
+                            </span>
+                        {% elif attendance.overall >= 60 %}
+                            <span class="flex items-center text-yellow-600">
+                                <span class="material-icons text-sm mr-1">warning</span>
+                                Needs improvement
+                            </span>
+                        {% else %}
+                            <span class="flex items-center text-red-600">
+                                <span class="material-icons text-sm mr-1">error</span>
+                                Below minimum requirement
+                            </span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="hidden sm:block w-32 h-32">
+                    <svg viewBox="0 0 36 36" class="w-full h-full">
+                        <path
+                            class="text-gray-200"
+                            stroke="currentColor"
+                            stroke-width="3"
+                            fill="none"
+                            d="M18 2.0845
+                                a 15.9155 15.9155 0 0 1 0 31.831
+                                a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                        <path
+                            class="{% if attendance.overall >= 75 %}text-green-500{% elif attendance.overall >= 60 %}text-yellow-500{% else %}text-red-500{% endif %}"
+                            stroke="currentColor"
+                            stroke-width="3"
+                            stroke-linecap="round"
+                            fill="none"
+                            stroke-dasharray="{{ attendance.overall }}, 100"
+                            d="M18 2.0845
+                                a 15.9155 15.9155 0 0 1 0 31.831
+                                a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        {% if attendance.subjects %}
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-medium text-gray-800 mb-4">Attendance Comparison</h2>
+                <div class="h-64">
+                    <canvas id="attendanceChart"></canvas>
+                </div>
+            </div>
+        {% endif %}
+        
+        <div class="mb-4">
+            <h2 class="text-xl font-medium text-gray-800">Subject-wise Attendance</h2>
+        </div>
+        
+        {% if attendance.subjects %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for subject in attendance.subjects %}
+                    <div class="bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition-shadow">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-lg font-medium text-gray-800">{{ subject.name }}</h3>
+                            <span class="text-2xl font-semibold {% if subject.percentage >= 75 %}text-green-600{% elif subject.percentage >= 60 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                                {{ subject.percentage }}%
+                            </span>
+                        </div>
+                        
+                        <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+                            <div 
+                                class="progress-bar h-2 rounded-full {% if subject.percentage >= 75 %}bg-green-500{% elif subject.percentage >= 60 %}bg-yellow-500{% else %}bg-red-500{% endif %}"
+                                style="width: {{ subject.percentage }}%"
+                            ></div>
+                        </div>
+                        
+                        <p class="text-sm text-gray-500">
+                            {{ subject.attended }} / {{ subject.total }} classes attended
+                        </p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="bg-white rounded-lg shadow-md p-8 text-center">
+                <span class="material-icons text-gray-400 text-5xl mb-4">event_busy</span>
+                <p class="text-gray-600">No attendance records found</p>
+                <p class="text-sm text-gray-500 mt-2">Check back later or contact your administrator</p>
+            </div>
+        {% endif %}
+    </main>
+    
+    <footer class="max-w-5xl mx-auto px-4 py-6 md:px-6">
+        <p class="text-center text-gray-500 text-sm">
+            Attendance data is updated periodically
+        </p>
+    </footer>
+</div>
+
+{% if attendance.subjects %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('attendanceChart').getContext('2d');
+    
+    const subjects = {{ attendance.subjects | tojson | safe }};
+    const labels = subjects.map(s => s.name);
+    const percentages = subjects.map(s => s.percentage);
+    const colors = percentages.map(p => {
+        if (p >= 75) return 'rgba(34, 197, 94, 0.8)';
+        if (p >= 60) return 'rgba(234, 179, 8, 0.8)';
+        return 'rgba(239, 68, 68, 0.8)';
+    });
+    const borderColors = percentages.map(p => {
+        if (p >= 75) return 'rgb(34, 197, 94)';
+        if (p >= 60) return 'rgb(234, 179, 8)';
+        return 'rgb(239, 68, 68)';
+    });
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Attendance %',
+                data: percentages,
+                backgroundColor: colors,
+                borderColor: borderColors,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}
